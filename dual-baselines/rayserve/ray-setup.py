@@ -9,8 +9,8 @@ if len(sys.argv) != 5:
     sys.exit(1)
 
 accel_type = sys.argv[1]
-num_replicas = int(sys.argv[2])
-model_name = sys.argv[3]
+model_name = sys.argv[2]
+num_replicas = int(sys.argv[3])
 hf_token = sys.argv[4]
 
 # --- Set CUDA_VISIBLE_DEVICES dynamically ---
