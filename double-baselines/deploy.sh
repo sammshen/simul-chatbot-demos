@@ -19,15 +19,21 @@ HF_TOKEN=$5
 
 # --- Step 1: Run Production Stack + LMCache ---
 echo "Deploying Production Stack + LMCache on localhost:30080"
-bash prodstack-lmcache/deploy.sh $NUM_REPLICAS $MODEL_NAME $HF_TOKEN
+bash prodstack-lmcache/deploy.sh $NUM_REPLICAS $MODEL_NAME $HF_TOKEN &
+PID1=$!
 
 # --- Step 2: Run the Comparison Baseline ---
 echo "Trying to deploy the comparison baseline on localhost:30081"
 if [ "$SERVICE_NAME" == "ray" ]; then
-  bash rayserve/deploy.sh $ACCELERATOR_TYPE $MODEL_NAME $NUM_REPLICAS $HF_TOKEN
+  bash rayserve/deploy.sh $ACCELERATOR_TYPE $MODEL_NAME $NUM_REPLICAS $HF_TOKEN &
+  PID2=$!
 else
   echo "Invalid service name: $SERVICE_NAME"
   echo "Currently supported services are: ray"
   exit 1
 fi
 
+wait $PID1
+echo "Deployed Production Stack + LMCache on localhost:30080"
+wait $PID2
+echo "Deployed Comparison Baseline on localhost:30081"

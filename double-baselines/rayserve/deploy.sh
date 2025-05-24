@@ -18,6 +18,10 @@ source rayserve_venv/bin/activate
 
 pip install -r ray-requirements.txt
 
+# Clean up any previous ray deployments
+ray stop --force
+pkill -f ray
+
 python ray-setup.py "$@"
 
 echo "Rayserve deployment complete"

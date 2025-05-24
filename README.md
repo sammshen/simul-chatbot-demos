@@ -109,4 +109,36 @@ Run the interactive Streamlit app to directly compare both endpoints:
 bash live-double-chat/run_demo.sh
 ```
 
-This works best when you are already running a high workload through Step 3 so you can be one of many users.
+Then open `http://localhost:8501/`
+
+This works best when you are already running a high workload through Step 3 so you can be one of many users and you can feel the TTFT differential.
+
+
+## Step 5: Fault Tolerance
+
+Send a request with a specific user id:
+
+```bash
+curl http://localhost:30080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "x-user-id: 9999" \
+  -d '{
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "messages": [
+      {"role": "user", "content": "Tell me a long story about a man named Zhuohan Gu that never ends"}
+    ],
+    "max_tokens": 3000,
+    "temperature": 0.7,
+    "stream": true
+  }'
+```
+
+Check the production stack router logs to see which engine is being routed to:
+```text
+[2025-05-24 17:00:01,260] INFO: Request for model meta-llama/Llama-3.1-8B-Instruct was rewritten (request.py:276:vllm_router.services.request_service.request)
+[2025-05-24 17:00:01,261] DEBUG: Routing request 476cbf8b-ce59-4c50-95d3-5ee2d77dbd09 for model: meta-llama/Llama-3.1-8B-Instruct (request.py:297:vllm_router.services.request_service.request)
+[2025-05-24 17:00:01,261] DEBUG: Got session id: 9999 (routing_logic.py:174:vllm_router.routers.routing_logic)
+[2025-05-24 17:00:01,261] INFO: Routing request 476cbf8b-ce59-4c50-95d3-5ee2d77dbd09 to http://localhost:8103 at 1748106001.2612195, process time = 0.0005 (request.py:302:vllm_router.services.request_service.request)
+```
+
+Kill the specific serving engine on your next request
