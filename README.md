@@ -8,6 +8,11 @@
 
 3. Test out Fault Tolerance of Production Stack
 
+<p align="center">
+  <img src="static/WebUI.png" alt="Web UI" width="45%" />
+  <img src="static/LiveStats.png" alt="Live Stats" width="45%" />
+</p>
+
 ## Step 1: Deploy Production Stack and Comparison Baseline (single script)
 
 ### Run:
@@ -81,9 +86,7 @@ ITL: ProductionStack=16.95ms, Other=90.99ms (Other is 436.9% slower)
 Output throughput: ProductionStack=523.71 t/s, Other=484.96 t/s (Other processed 7.4% fewer tokens)
 ```
 
-## Step 4: Interactive Side-by-Side Chat Comparison
-
-Run the interactive Streamlit app to directly compare both endpoints:
+## Run the interactive Streamlit app to directly compare both endpoints:
 
 ```bash
 bash dual-chat/run_demo.sh
@@ -91,10 +94,9 @@ bash dual-chat/run_demo.sh
 
 Then open `http://localhost:8501/`
 
-This works best when you are already running a high workload through Step 3 so you can be one of many users and you can feel the TTFT differential.
+You will feel the difference if the automated users are running the background (especially with 12 QPS)
 
-
-## Step 5: Fault Tolerance
+## Step 4: Fault Tolerance
 
 Send a request with a specific user id:
 
@@ -121,4 +123,11 @@ Check the production stack router logs to see which engine is being routed to:
 [2025-05-24 17:00:01,261] INFO: Routing request 476cbf8b-ce59-4c50-95d3-5ee2d77dbd09 to http://localhost:8103 at 1748106001.2612195, process time = 0.0005 (request.py:302:vllm_router.services.request_service.request)
 ```
 
-Kill the specific serving engine on your next request
+Kill the specific serving engine on your next request (you can find the process id with nvidia-smi) and then:
+```bash
+sudo kill -9 <PID>
+```
+
+You should see the stream continue.
+
+Do the same with Other if you can find which engine is being routed to. E.g. for RayServe you have to watch the logs and react fast and you can kil the correct engine.
