@@ -1,30 +1,32 @@
 # Simultaneous High-Volume User Chatbot Simulations
 
-### Compare Production Stack + LMCache versus other orchestration layers for LLM serving in a multi-round QA RAG setting.
+## TL;DR
 
-### Automated "users" will join and send a high volume of long context requests and you will be able to track TTFT/ITL/TPOT in **REAL TIME**
+1. Feel TTFT/ITL/TPOT in real time through Web UI
 
-### **YOU YOURSELF** will *also* be able to join in on the QA through a live Web UI.
+2. See aggregated TTFT/ITIL/TPOT statistics on long context multi-user QA with your customized retrieved documents.
 
-# Step 1: Setting up Production Stack vs Comparison Baseline
+3. Test out Fault Tolerance of Production Stack
 
-## Run:
+## Step 1: Deploy Production Stack and Comparison Baseline (single script)
+
+### Run:
 ```bash
-bash double-baselines/deploy.sh <COMPARISON_BASELINE> <ACCELERATOR_TYPE> <MODEL_NAME> <NUM_REPLICAS> <HF_TOKEN>
+bash dual-baselines/deploy.sh <COMPARISON_BASELINE> <ACCELERATOR_TYPE> <MODEL_NAME> <NUM_REPLICAS> <HF_TOKEN>
 # Example:
-bash double-baselines/deploy.sh ray A100 meta-llama/Llama-3.1-8B-Instruct 4 hf_...
+bash dual-baselines/deploy.sh ray A100 meta-llama/Llama-3.1-8B-Instruct 4 hf_...
 ```
 
-## Explanation:
+### Explanation:
 ```text
 <COMPARISON_BASELINE>: "ray" (more coming soon...)
 <ACCELERATOR_TYPE>: A10G, L4, A100, H100, etc.
 <MODEL_NAME>: meta-llama/Llama-3.1-8B-Instruct, mistralai/Mistral-7B-Instruct-v0.2
-<NUM_REPLICAS>: the SAME number of GPUs/Replicas will be used for the two baselines
+<NUM_REPLICAS>: the SAME number of GPUs/Replicas will be used for the two baselines (0..N-1 for ProdStack, N..2N-1 for Other)
 <HF_TOKEN>: make sure this has access to your model
 ```
 
-## Confirm:
+### Confirm:
 ```bash
 # To the Production Stack + LMCache OpenAI API now exposed at localhost:30080
 # Change the model to the one you selected
@@ -49,56 +51,34 @@ curl http://localhost:30081/v1/chat/completions   -H "Content-Type: application/
   }'
 ```
 
-# Step 2: Set Up your Personalized RAG DB
+## Step 2: Customize Application specific Long Contexts
 
-### Application-Specific Customization:
+Populate the `contexts` folder with .html or .pdf or .txt files. These will be the files that will be randomly selected to form the long contexts for the multiround QA.
 
-Populate the `RAG-DB` folder with .html or .pdf or .txt files. These will be the files that will be randomly selected to form the long contexts for the multiround QA. Additionally, these will be the files that you will be able to select during your interactive session. A couple of Linux man files are already in there as an example that you can remove and replace if you would like.
+## Step 3: Joining a Live Long Context Multi-Round Multi-User QA Simulation!!
 
-# Step 3: Long Context High Volume Multi-Round QA and Live Querying
+### Deploying the automated users
 
-## Running the Benchmark
-
-Run the benchmark script to compare both endpoints:
+System Prompt is 3000 tokens, Conversation History goes up to 30000 tokens. Around 200 users at any given moment asking for short answers (~100 tokens) based on the document.
 
 ```bash
-bash ./simul-qa/long_input_short_output_run.sh <MODEL-NAME> [LIST OF QPS]
+bash ./dual-qa/long_input_short_output_run.sh <MODEL-NAME> [LIST OF QPS]
 # Example:
-bash ./simul-qa/long_input_short_output_run.sh meta-llama/Llama-3.1-8B-Instruct 6.2
+bash ./dual-qa/long_input_short_output_run.sh meta-llama/Llama-3.1-8B-Instruct 6 12
+# 6 is a lighter workload
+# 12 is a very intense workload for 4 serving engines
 ```
 
-## Real Time TTFT, ITL, TPOT, Throughput
+### Real Time Statistics: TTFT, ITL, TPOT, Throughput
 
 You'll be able to find real time files in `real_time_statistics`
-- `real_time_statistics/real_time_stats_{qps}.txt` will summarize the TTFT, ITL, TPOT, and Throughput comparisons every 5 seconds with the number of currently active users, input and output tokens, and documents used in RAG.
+- `real_time_statistics/real_time_stats_{qps}.txt` will summarize the TTFT, ITL, TPOT, and Throughput comparisons every 5 seconds with the number of currently active users, input and output tokens, and long contexts used for each user.
+
 ```text
-TTFT: ProductionStack=134.39ms, Other=4195.77ms (Other is 3022.1% slower)
-TPOT: ProductionStack=14.63ms, Other=47.89ms (Other is 227.4% slower)
-ITL: ProductionStack=15.93ms, Other=95.51ms (Other is 499.5% slower)
-Output throughput: ProductionStack=193.25 t/s, Other=154.51 t/s (Other is 20.0% slower)
-```
-- `real_time_statistics/user_request_{qps}.txt` will summarize the same metrics for every individual Request by every individual user.
-```text
----------------------------------------------------
-[2025-05-24 12:15:42] User 27, Request 8, Endpoint Other
-  Documents: man-unix.txt and man-sed.txt
-  Prompt tokens: 4808
-  Generation tokens: 100
-  TTFT: 2145.61 ms
-  TPOT: -0.10 ms
-  ITL: 21.36 ms
-  Total generation time: 2.14 s
-  Generation speed: 46.82 tokens/s
----------------------------------------------------
-[2025-05-24 12:15:43] User 18, Request 9, Endpoint ProductionStack
-  Documents: man-python.txt and man-sed.txt
-  Prompt tokens: 6143
-  Generation tokens: 100
-  TTFT: 3813.21 ms
-  TPOT: -15.60 ms
-  ITL: 22.69 ms
-  Total generation time: 2.27 s
-  Generation speed: 44.08 tokens/s
+TTFT: ProductionStack=241.35ms, Other=2999.92ms (Other is 1143.0% slower)
+TPOT: ProductionStack=14.57ms, Other=59.70ms (Other is 309.8% slower)
+ITL: ProductionStack=16.95ms, Other=90.99ms (Other is 436.9% slower)
+Output throughput: ProductionStack=523.71 t/s, Other=484.96 t/s (Other processed 7.4% fewer tokens)
 ```
 
 ## Step 4: Interactive Side-by-Side Chat Comparison
@@ -106,7 +86,7 @@ Output throughput: ProductionStack=193.25 t/s, Other=154.51 t/s (Other is 20.0% 
 Run the interactive Streamlit app to directly compare both endpoints:
 
 ```bash
-bash live-double-chat/run_demo.sh
+bash dual-chat/run_demo.sh
 ```
 
 Then open `http://localhost:8501/`
