@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV=/home/ubuntu/simul-chatbot-demos/double-baselines/rayserve/rayserve_venv
+VIRTUAL_ENV=/home/ubuntu/simul-chatbot-demos/dual-baselines/rayserve/rayserve_venv
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

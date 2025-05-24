@@ -13,23 +13,20 @@
   <img src="static/LiveStats.png" alt="Live Stats" width="45%" />
 </p>
 
-## Step 1: Deploy Production Stack and Comparison Baseline (single script)
+## Step 1: Deploy Production Stack and Comparison Baseline
 
 ### Run:
 ```bash
-bash dual-baselines/deploy.sh <COMPARISON_BASELINE> <ACCELERATOR_TYPE> <MODEL_NAME> <NUM_REPLICAS> <HF_TOKEN>
-# Example:
-bash dual-baselines/deploy.sh ray A100 meta-llama/Llama-3.1-8B-Instruct 4 hf_...
+# Production Stack + LMCache (Mandatory)
+bash dual-baselines/prodstack-lmcache/deploy.sh <MODEL_NAME> <NUM_REPLICAS> <HF_TOKEN>
+bash dual-baselines/prodstack-lmcache/deploy.sh meta-llama/Llama-3.1-8B-Instruct 4 hf_...
+# Other
+# Ray:
+bash dual-baselines/rayserve/deploy.sh <ACCELERATOR_TYPE> <MODEL_NAME> <NUM_REPLICAS> <HF_TOKEN>
+bash dual-baselines/rayserve/deploy.sh A100 meta-llama/Llama-3.1-8B-Instruct 4 hf_...
+# More Coming Soon...
 ```
 
-### Explanation:
-```text
-<COMPARISON_BASELINE>: "ray" (more coming soon...)
-<ACCELERATOR_TYPE>: A10G, L4, A100, H100, etc.
-<MODEL_NAME>: meta-llama/Llama-3.1-8B-Instruct, mistralai/Mistral-7B-Instruct-v0.2
-<NUM_REPLICAS>: the SAME number of GPUs/Replicas will be used for the two baselines (0..N-1 for ProdStack, N..2N-1 for Other)
-<HF_TOKEN>: make sure this has access to your model
-```
 
 ### Confirm:
 ```bash
