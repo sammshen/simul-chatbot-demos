@@ -824,7 +824,7 @@ class UserSessionManager:
                     f"TTFT: ProductionStack={ps_stats['ttft_ms']:.2f}ms, Other={other_stats['ttft_ms']:.2f}ms (Other is {ttft_diff_pct:.1f}% slower)\n"
                     f"TPOT: ProductionStack={ps_stats['tpot_ms']:.2f}ms, Other={other_stats['tpot_ms']:.2f}ms (Other is {tpot_diff_pct:.1f}% slower)\n"
                     f"ITL: ProductionStack={ps_stats['itl_ms']:.2f}ms, Other={other_stats['itl_ms']:.2f}ms (Other is {itl_diff_pct:.1f}% slower)\n"
-                    f"Output throughput: ProductionStack={ps_stats['output_throughput']:.2f} t/s, Other={other_stats['output_throughput']:.2f} t/s (Other is {throughput_diff_pct:.1f}% slower)\n"
+                    f"Output throughput: ProductionStack={ps_stats['output_throughput']:.2f} t/s, Other={other_stats['output_throughput']:.2f} t/s (Other processed {throughput_diff_pct:.1f}% fewer tokens)\n"
                     f"================================================\n\n"
                 )
 
@@ -1359,7 +1359,7 @@ def main():
                 f.write(f"TTFT: ProductionStack={ps_ttft_ms:.2f}ms, Other={rs_ttft_ms:.2f}ms (Other is {ttft_pct:.1f}% slower)\n")
                 f.write(f"TPOT: ProductionStack={ps_tpot_ms:.2f}ms, Other={rs_tpot_ms:.2f}ms (Other is {tpot_pct:.1f}% slower)\n")
                 f.write(f"ITL: ProductionStack={ps_itl_ms:.2f}ms, Other={rs_itl_ms:.2f}ms (Other is {itl_pct:.1f}% slower)\n")
-                f.write(f"Throughput: ProductionStack={ps_throughput:.2f}t/s, Other={rs_throughput:.2f}t/s (Other is {throughput_pct:.1f}% slower)\n\n")
+                f.write(f"Throughput: ProductionStack={ps_throughput:.2f}t/s, Other={rs_throughput:.2f}t/s (Other processed {throughput_pct:.1f}% fewer tokens)\n\n")
 
                 # Add document usage statistics
                 f.write("Document Usage Statistics:\n")

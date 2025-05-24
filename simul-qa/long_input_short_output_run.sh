@@ -31,32 +31,32 @@ else
 fi
 
 # CONFIGURATION
-NUM_USERS_WARMUP="${NUM_USERS_WARMUP:-20}"
-NUM_USERS="${NUM_USERS:-15}"
-NUM_ROUNDS="${NUM_ROUNDS:-20}"
+NUM_USERS_WARMUP="${NUM_USERS_WARMUP:-40}"
+NUM_USERS="${NUM_USERS:-40}"
+NUM_ROUNDS="${NUM_ROUNDS:-40}"
 
-SYSTEM_PROMPT="${SYSTEM_PROMPT:-3000}" # Shared system prompt length
+SYSTEM_PROMPT="${SYSTEM_PROMPT:-2000}" # Shared system prompt length
 CHAT_HISTORY="${CHAT_HISTORY:-30000}" # User specific chat history length
 ANSWER_LEN="${ANSWER_LEN:-100}" # Generation length per round
 
 # init-user-id starts at 1, will add 20 each iteration
 INIT_USER_ID="${INIT_USER_ID:-1}"
 
-TEST_DURATION="${TEST_DURATION:-100}" # Duration of the test in seconds
+TEST_DURATION="${TEST_DURATION:-200}" # Duration of the test in seconds
 
 warmup() {
     # Warm up the servers with a lot of user queries
     python3 "${SCRIPT_DIR}/multi-round-qa.py" \
-        --num-users 1 \
-        --num-rounds 2 \
-        --qps 2 \
+        --num-users $NUM_USERS_WARMUP \
+        --num-rounds $NUM_ROUNDS \
+        --qps $1 \
         --shared-system-prompt $SYSTEM_PROMPT \
         --user-history-prompt $CHAT_HISTORY \
         --answer-len $ANSWER_LEN \
         --model "$MODEL" \
         --base-url "http://localhost:30080" \
         --init-user-id "$INIT_USER_ID" \
-        --output "warmup.csv" \
+        --output "warmup_${1}.csv" \
         --log-interval 30 \
         --request-with-user-id \
         --time $((NUM_USERS_WARMUP / 2))
@@ -96,5 +96,6 @@ run_benchmark() {
 # Run benchmarks for the specified QPS values
 for qps in "${QPS_VALUES[@]}"; do
     output_file="summary_${qps}.csv"
+    warmup "$qps"
     run_benchmark "$qps" "$output_file"
 done

@@ -64,7 +64,7 @@ Run the benchmark script to compare both endpoints:
 ```bash
 bash ./simul-qa/long_input_short_output_run.sh <MODEL-NAME> [LIST OF QPS]
 # Example:
-bash ./simul-qa/long_input_short_output_run.sh meta-llama/Llama-3.1-8B-Instruct 4 5.2
+bash ./simul-qa/long_input_short_output_run.sh meta-llama/Llama-3.1-8B-Instruct 6.2
 ```
 
 ## Real Time TTFT, ITL, TPOT, Throughput
@@ -101,5 +101,12 @@ Output throughput: ProductionStack=193.25 t/s, Other=154.51 t/s (Other is 20.0% 
   Generation speed: 44.08 tokens/s
 ```
 
-## Step 4: Joining in on the chat!
+## Step 4: Interactive Side-by-Side Chat Comparison
 
+Run the interactive Streamlit app to directly compare both endpoints:
+
+```bash
+bash live-double-chat/run_demo.sh
+```
+
+This works best when you are already running a high workload through Step 3 so you can be one of many users.
