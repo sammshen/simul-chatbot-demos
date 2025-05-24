@@ -1,0 +1,4 @@
+vllm
+ray[serve,llm]>=2.43.0
+pyarrow
+botocore
