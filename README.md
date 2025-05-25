@@ -132,7 +132,7 @@ the correspodning `PID` for the port. e.g. 8101 would be `3078335` in this examp
 
 However, if you see `8101`, that means the next request will go to `8103` (in this example), which is `3078513`.
 
-Send another request, wait 5 seconds, and then run:
+Send another request and then run:
 ```bash
 sudo kill -9  3078513
 ```
