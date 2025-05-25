@@ -1,5 +1,9 @@
 # Simultaneous High-Volume User Chatbot Simulations
 
+## Unlisted Fallback Video (Comparing RayServe):
+
+https://www.youtube.com/watch?v=qLDdIFxFZJU
+
 ## TL;DR
 
 1. Feel TTFT/ITL/TPOT in real time through Web UI
@@ -66,7 +70,7 @@ System Prompt is 3000 tokens, Conversation History goes up to 30000 tokens. Arou
 ```bash
 bash ./dual-qa/long_input_short_output_run.sh <MODEL-NAME> [LIST OF QPS]
 # Example:
-bash ./dual-qa/long_input_short_output_run.sh meta-llama/Llama-3.1-8B-Instruct 6 12
+bash ./dual-qa/long_input_short_output_run.sh meta-llama/Llama-3.1-8B-Instruct 8
 # 6 is a lighter workload
 # 12 is a very intense workload for 4 serving engines
 ```
@@ -91,40 +95,48 @@ bash dual-chat/run_demo.sh
 
 Then open `http://localhost:8501/`
 
-You will feel the difference if the automated users are running the background (especially with 12 QPS)
+You will feel the difference if the automated users are running the background.
 
 ## Step 4: Fault Tolerance
 
-Send a request with a specific user id:
+Run:
 
 ```bash
-curl http://localhost:30080/v1/chat/completions \
+curl -X POST http://localhost:30080/v1/completions \
   -H "Content-Type: application/json" \
-  -H "x-user-id: 9999" \
   -d '{
     "model": "meta-llama/Llama-3.1-8B-Instruct",
-    "messages": [
-      {"role": "user", "content": "Tell me a long story about a man named Zhuohan Gu that never ends"}
-    ],
-    "max_tokens": 3000,
-    "temperature": 0.7,
-    "stream": true
+    "prompt": "Generate a super long story about a cat.",
+    "max_tokens": 30000,
+    "stream": "True"
   }'
 ```
 
-Check the production stack router logs to see which engine is being routed to:
+Check the production stack router logs (same terminal where you deployed) to see which port handled your request. Check `nvidia-smi` to see
+the correspodning `PID` for the port. e.g. 8101 would be `3078335` in this example:
+
 ```text
-[2025-05-24 17:00:01,260] INFO: Request for model meta-llama/Llama-3.1-8B-Instruct was rewritten (request.py:276:vllm_router.services.request_service.request)
-[2025-05-24 17:00:01,261] DEBUG: Routing request 476cbf8b-ce59-4c50-95d3-5ee2d77dbd09 for model: meta-llama/Llama-3.1-8B-Instruct (request.py:297:vllm_router.services.request_service.request)
-[2025-05-24 17:00:01,261] DEBUG: Got session id: 9999 (routing_logic.py:174:vllm_router.routers.routing_logic)
-[2025-05-24 17:00:01,261] INFO: Routing request 476cbf8b-ce59-4c50-95d3-5ee2d77dbd09 to http://localhost:8103 at 1748106001.2612195, process time = 0.0005 (request.py:302:vllm_router.services.request_service.request)
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    1   N/A  N/A         3078335      C   /opt/venv/bin/python3                 73030MiB |
+|    3   N/A  N/A         3078513      C   /opt/venv/bin/python3                 73030MiB |
+|    4   N/A  N/A         2712828      C   ...EngineBackgroundProcess.start      72794MiB |
+|    5   N/A  N/A         2712823      C   ...EngineBackgroundProcess.start      72808MiB |
+|    6   N/A  N/A         3118006      C   ...EngineBackgroundProcess.start      72546MiB |
+|    7   N/A  N/A         2712892      C   ...EngineBackgroundProcess.start      72792MiB |
++-----------------------------------------------------------------------------------------+
 ```
 
-Kill the specific serving engine on your next request (you can find the process id with nvidia-smi) and then:
+However, if you see `8101`, that means the next request will go to `8103` (in this example), which is `3078513`.
+
+Send another request, wait 5 seconds, and then run:
 ```bash
-sudo kill -9 <PID>
+sudo kill -9  3078513
 ```
 
-You should see the stream continue.
+You should see the response *continue* to stream. Check the logs and you will see that another serving engine was assigned the stream request.
 
-Do the same with Other if you can find which engine is being routed to. E.g. for RayServe you have to watch the logs and react fast and you can kil the correct engine.
+You can do the same thing by carefully watching the logs of your other orchestration baseline (e.g. RayServe) and see if they handle fault tolerance properly like production stack does.

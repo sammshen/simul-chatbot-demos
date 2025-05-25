@@ -7,13 +7,13 @@ cd $SCRIPT_DIR
 
 # Ensure 3 arguments are provided
 if [ $# -ne 3 ]; then
-  echo "Usage: $0 <REPLICA_COUNT> <MODEL_URL> <HF_TOKEN>"
+  echo "Usage: $0 <MODEL_URL> <REPLICA_COUNT> <HF_TOKEN>"
   exit 1
 fi
 
 # Arguments:
-REPLICA_COUNT=$1
-MODEL_URL=$2
+MODEL_URL=$1
+REPLICA_COUNT=$2
 HF_TOKEN=$3
 
 # Kill existing GPU processes
@@ -199,6 +199,9 @@ done
 BACKENDS="${BACKENDS%,}"
 MODELS="${MODELS%,}"
 
+echo "BACKENDS: $BACKENDS"
+echo "MODELS: $MODELS"
+
 # Clean up router port and start router
 ROUTER_IMAGE=apostab/lmstack-router:latest
 echo "Checking for any process using port 30080..."
@@ -210,14 +213,54 @@ else
   echo "✅ Port 30080 is free."
 fi
 
-sudo docker run --network host $ROUTER_IMAGE \
-    --port 30080 \
+
+# sudo docker run --network host apostab/lmstack-router:latest\
+#  --port 30080 \
+#   --service-discovery static \
+#   --static-backends "http://localhost:8100,http://localhost:8101,http://localhost:8102,http://localhost:8103" \
+#   --static-models "meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-8B-Instruct" \
+#   --log-stats \
+#   --log-stats-interval 10 \
+#   --engine-stats-interval 10 \
+#   --request-stats-window 10 \
+#   --request-stats-window 10 \
+#   --routing-logic roundrobin
+
+sudo docker run --network host $ROUTER_IMAGE --port 30080 \
     --service-discovery static \
     --static-backends "$BACKENDS" \
     --static-models "$MODELS" \
-    --engine-stats-interval 10 \
     --log-stats \
+    --log-stats-interval 10 \
+    --engine-stats-interval 10 \
+    --request-stats-window 10 \
+    --request-stats-window 10 \
     --routing-logic session \
     --session-key "x-user-id"
 
+# python3 -m vllm_router.app \
+#  --port 30080 \
+#   --service-discovery static \
+#   --static-backends "http://localhost:8101,http://localhost:8103" \
+#   --static-models "meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-8B-Instruct" \
+#   --log-stats \
+#   --log-stats-interval 10 \
+#   --engine-stats-interval 10 \
+#   --request-stats-window 10 \
+#   --request-stats-window 10 \
+#   --routing-logic roundrobin
+
+
+
+# sudo docker run --network host $ROUTER_IMAGE \
+#     --port 30080 \
+#     --service-discovery static \
+#     --static-backends "$BACKENDS" \
+#     --static-models "$MODELS" \
+#     --engine-stats-interval 10 \
+#     --log-stats \
+#     --routing-logic session \
+#     --session-key "x-user-id"
+
 echo "$REPLICA_COUNT vllm instances of $MODEL_URL are now served on production stack router at localhost:30080"
+
